@@ -1,98 +1,203 @@
 {
-    "name": "Travel Itinerary Generator",
-    "nodes": [
-        {
-            "parameters": {
-                "httpMethod": "POST",
-                "path": "travel-itinerary",
-                "options": {}
-            },
-            "id": "webhook-node",
-            "name": "Webhook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                460,
-                240
-            ]
-        },
-        {
-            "parameters": {
-                "model": "gpt-4",
-                "messages": {
-                    "values": [
-                        {
-                            "role": "system",
-                            "content": "You are an expert travel agent. Create a detailed, day-by-day travel itinerary based on the user's input. Format the output as clean HTML suitable for an email body."
-                        },
-                        {
-                            "role": "user",
-                            "content": "Destination: {{ $json.body.destination }}\nDuration: {{ $json.body.days }} days\nBudget: {{ $json.body.budget }}\nTravelers: {{ $json.body.travelers }}\nMode of Travel: {{ $json.body.transport }}\nPreferences: {{ $json.body.preferences }}"
-                        }
-                    ]
-                }
-            },
-            "id": "openai-node",
-            "name": "OpenAI Chat Model",
-            "type": "n8n-nodes-base.openAi",
-            "typeVersion": 1,
-            "position": [
-                680,
-                240
-            ],
-            "credentials": {
-                "openAiApi": {
-                    "id": "YOUR_OPENAI_CREDENTIAL_ID",
-                    "name": "OpenAI account"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "fromEmail": "your-email@gmail.com",
-                "toEmail": "={{ $json.body.email }}",
-                "subject": "Your {{ $json.body.destination }} Itinerary",
-                "html": "={{ $node[\"OpenAI Chat Model\"].json.content }}",
-                "options": {}
-            },
-            "id": "gmail-node",
-            "name": "Gmail",
-            "type": "n8n-nodes-base.gmail",
-            "typeVersion": 2,
-            "position": [
-                900,
-                240
-            ],
-            "credentials": {
-                "gmailOAuth2": {
-                    "id": "YOUR_GMAIL_CREDENTIAL_ID",
-                    "name": "Gmail account"
-                }
-            }
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $('DATA INPUT').item.json.body.email }}",
+        "subject": "TRAVEL PLAN SUGGESTION",
+        "message": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -784,
+        976
+      ],
+      "id": "36ba6c80-d390-4d91-b224-b46e01c93568",
+      "name": "Send a message",
+      "webhookId": "7db9c740-eeaf-4994-ad9a-00f73d479c4d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "aYEs4B3J5fX0YuPZ",
+          "name": "Gmail account"
         }
-    ],
-    "connections": {
-        "Webhook": {
-            "main": [
-                [
-                    {
-                        "node": "OpenAI Chat Model",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "OpenAI Chat Model": {
-            "main": [
-                [
-                    {
-                        "node": "Gmail",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant. CREATE A THE MESSAGE IN NEAT AND PROFFESSIONAL MANNER "
         }
+      },
+      "id": "b403794e-9293-4d15-bdab-a2b6c4205985",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -1296,
+        976
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        1184
+      ],
+      "id": "afd18e6e-0915-4c10-87fe-b312c335ba18",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "0D57asf26tMSz3Nw",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "602ace3a-7fa0-4198-be51-ad9503319e75",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1712,
+        976
+      ],
+      "id": "f352308f-5731-4827-9f1e-8dd89c7b4d7e",
+      "name": "DATA INPUT",
+      "webhookId": "602ace3a-7fa0-4198-be51-ad9503319e75"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46de574b-76c2-4ebc-b243-a4da2ed0bb19",
+              "name": "prompt",
+              "value": "=Create a detailed travel itinerary.  Destination: {{ $json.body.destination }} Number of days:{{ $json.body.days }} Budget: ₹{{ $json.body.budget }} the mode of travel is {{ $json.body.modeoftravel }} and number of people is {{ $json.body.numberofpeople }} and preference are {{ $json.body.preferences }}\nRequirements: - Day-wise plan - Places to visit each day - Food suggestions - Local transport tips - Budget-friendly advice\n",
+              "type": "string"
+            },
+            {
+              "id": "c8ee0764-4cd1-4e32-8921-8e623eea11d9",
+              "name": "email",
+              "value": "={{ $json.query.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "dotNotation": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1472,
+        976
+      ],
+      "id": "fb5c886a-4ab3-4c63-83e6-00d80a8b92b1",
+      "name": "PROMPT CREATION"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4ece907-71ec-485d-9915-668e0a242983",
+              "name": "prompt",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -992,
+        976
+      ],
+      "id": "a1a86154-ce3f-4745-b6c5-a80daf0b2b31",
+      "name": "CONVETING TO TEXT FILE"
     }
+  ],
+  "connections": {
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "CONVETING TO TEXT FILE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DATA INPUT": {
+      "main": [
+        [
+          {
+            "node": "PROMPT CREATION",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROMPT CREATION": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CONVETING TO TEXT FILE": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b5c49efeeb688a48ee6f6508c8fa0691a6eb6f553c28eb70b0b3843487875da"
+  }
 }
